@@ -3,6 +3,7 @@ package pl.allegro.tech.hermes.consumers.supervisor.process
 import com.codahale.metrics.MetricRegistry
 import com.jayway.awaitility.Awaitility
 import com.jayway.awaitility.core.ConditionFactory
+import pl.allegro.tech.hermes.api.DeliveryType
 import pl.allegro.tech.hermes.api.Subscription
 import pl.allegro.tech.hermes.api.SubscriptionName
 import pl.allegro.tech.hermes.api.Topic
@@ -10,6 +11,7 @@ import pl.allegro.tech.hermes.common.config.Configs
 import pl.allegro.tech.hermes.common.metric.HermesMetrics
 import pl.allegro.tech.hermes.consumers.supervisor.ConsumersExecutorService
 import pl.allegro.tech.hermes.metrics.PathsCompiler
+import pl.allegro.tech.hermes.test.helper.builder.SubscriptionBuilder
 import pl.allegro.tech.hermes.test.helper.builder.TopicBuilder
 import pl.allegro.tech.hermes.test.helper.config.MutableConfigFactory
 import spock.lang.Specification
@@ -168,6 +170,25 @@ class ConsumerProcessSupervisorTest extends Specification {
         signalsToDrop.forEach {
             assert metrics.counter("supervisor.signal.dropped." + it.type.name()).getCount() == 1
         }
+    }
+
+    def "should stop consumer process when subscription delivery type is changed"() {
+        given:
+        Subscription batchSubscription = subscription(topic1.getQualifiedName(), 'sub1')
+        .withDeliveryType(DeliveryType.BATCH)
+        .build()
+        consumer.updateSubscription(batchSubscription)
+
+        Subscription serialSubscription = subscription(topic1.getQualifiedName(), 'sub1')
+        .withDeliveryType(DeliveryType.SERIAL)
+        .build()
+
+        when:
+        runAndWait(supervisor.accept(Signal.of(UPDATE_SUBSCRIPTION, batchSubscription.getQualifiedName(), serialSubscription)))
+
+        then:
+        supervisor.countRunningProcesses() == 0
+
     }
 
     private static runAndWait(ConsumerProcessSupervisor supervisor) {

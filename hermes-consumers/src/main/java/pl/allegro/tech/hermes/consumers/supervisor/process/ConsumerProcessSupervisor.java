@@ -128,8 +128,10 @@ public class ConsumerProcessSupervisor implements Runnable {
             case START:
                 start(signal);
                 break;
-            case RETRANSMIT:
             case UPDATE_SUBSCRIPTION:
+                updateSubscription(signal);
+                break;
+            case RETRANSMIT:
             case UPDATE_TOPIC:
             case COMMIT:
                 forRunningConsumerProcess(signal, runningProcess -> runningProcess.getConsumerProcess().accept(signal));
@@ -144,6 +146,24 @@ public class ConsumerProcessSupervisor implements Runnable {
             default:
                 logger.warn("Unknown signal {}", signal);
                 break;
+        }
+    }
+
+    private void updateSubscription(Signal signal) {
+        if(signal.getPayload() != null && runningConsumerProcesses.hasProcess(signal.getTarget())) {
+            Subscription signalSubscription = signal.getPayload();
+            if(signalSubscription.getDeliveryType() != runningConsumerProcesses.getProcess(signal.getTarget()).getSubscription().getDeliveryType()) {
+                forRunningConsumerProcess(Signal.of(STOP, signal.getTarget(), signal.getPayload()), runningProcess -> {
+                    processKiller.observe(runningProcess);
+                    runningConsumerProcesses.remove(runningProcess);
+                    runningProcess.getConsumerProcess().accept(signal);
+                });
+            } else {
+                forRunningConsumerProcess(signal, runningProcess -> runningProcess.getConsumerProcess().accept(signal));
+            }
+        } else {
+            metrics.counter("supervisor.signal.dropped." + signal.getType().name()).inc();
+            logger.warn("Dropping signal {} as running target consumer process does not exist.", signal);
         }
     }
 
