@@ -137,11 +137,7 @@ public class ConsumerProcessSupervisor implements Runnable {
                 forRunningConsumerProcess(signal, runningProcess -> runningProcess.getConsumerProcess().accept(signal));
                 break;
             case STOP:
-                forRunningConsumerProcess(signal, runningProcess -> {
-                    processKiller.observe(runningProcess);
-                    runningConsumerProcesses.remove(runningProcess);
-                    runningProcess.getConsumerProcess().accept(signal);
-                });
+                stop(signal);
                 break;
             default:
                 logger.warn("Unknown signal {}", signal);
@@ -150,23 +146,26 @@ public class ConsumerProcessSupervisor implements Runnable {
     }
 
     private void updateSubscription(Signal signal) {
-        if(signal.getPayload() != null && runningConsumerProcesses.hasProcess(signal.getTarget())) {
+        if(runningConsumerProcesses.hasProcess(signal.getTarget())) {
             Subscription signalSubscription = signal.getPayload();
             if(signalSubscription.getDeliveryType() != runningConsumerProcesses.getProcess(signal.getTarget()).getSubscription().getDeliveryType()) {
                 logger.info("Stopping consumer because of subscription delivery type change: {}", signalSubscription.getName());
-                forRunningConsumerProcess(Signal.of(STOP, signal.getTarget()), runningProcess -> {
-                    processKiller.observe(runningProcess);
-                    runningConsumerProcesses.remove(runningProcess);
-                    runningProcess.getConsumerProcess().accept(signal);
-                });
+                stop(Signal.of(STOP, signal.getTarget()));
             } else {
                 logger.info("Updating consumer, same subs types:{}", signalSubscription);
                 forRunningConsumerProcess(signal, runningProcess -> runningProcess.getConsumerProcess().accept(signal));
             }
         } else {
-            metrics.counter("supervisor.signal.dropped." + signal.getType().name()).inc();
-            logger.warn("Dropping signal {} as running target consumer process does not exist.", signal);
+           drop(signal);
         }
+    }
+
+    private void stop(Signal signal) {
+        forRunningConsumerProcess(signal, runningProcess -> {
+            processKiller.observe(runningProcess);
+            runningConsumerProcesses.remove(runningProcess);
+            runningProcess.getConsumerProcess().accept(signal);
+        });
     }
 
     private void forRunningConsumerProcess(Signal signal, java.util.function.Consumer<RunningConsumerProcess> consumerProcessConsumer) {
@@ -174,9 +173,13 @@ public class ConsumerProcessSupervisor implements Runnable {
         if (runningConsumerProcesses.hasProcess(signal.getTarget())) {
             consumerProcessConsumer.accept(runningConsumerProcesses.getProcess(signal.getTarget()));
         } else {
-            metrics.counter("supervisor.signal.dropped." + signal.getType().name()).inc();
-            logger.warn("Dropping signal {} as running target consumer process does not exist.", signal);
+           drop(signal);
         }
+    }
+
+    private void drop(Signal signal) {
+        metrics.counter("supervisor.signal.dropped." + signal.getType().name()).inc();
+        logger.warn("Dropping signal {} as running target consumer process does not exist.", signal);
     }
 
     private void start(Signal start) {
