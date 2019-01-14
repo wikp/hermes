@@ -153,6 +153,7 @@ public class ConsumerProcessSupervisor implements Runnable {
         if(signal.getPayload() != null && runningConsumerProcesses.hasProcess(signal.getTarget())) {
             Subscription signalSubscription = signal.getPayload();
             if(signalSubscription.getDeliveryType() != runningConsumerProcesses.getProcess(signal.getTarget()).getSubscription().getDeliveryType()) {
+                logger.info("Stopping consumer becouse of subscription delivery type change: {}", signalSubscription.getName());
                 forRunningConsumerProcess(Signal.of(STOP, signal.getTarget(), signal.getPayload()), runningProcess -> {
                     processKiller.observe(runningProcess);
                     runningConsumerProcesses.remove(runningProcess);
