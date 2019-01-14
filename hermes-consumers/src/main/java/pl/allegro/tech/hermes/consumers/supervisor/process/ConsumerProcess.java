@@ -74,6 +74,7 @@ public class ConsumerProcess implements Runnable {
     }
 
     public ConsumerProcess accept(Signal signal) {
+        logger.info("Accepting signal: {}", signal.getType());
         this.signals.add(signal);
         return this;
     }
@@ -114,6 +115,7 @@ public class ConsumerProcess implements Runnable {
                     retransmit(signal);
                     break;
                 case UPDATE_SUBSCRIPTION:
+                    logger.info("Consumer Process updates subscription:{} {}", signal.getTarget());
                     consumer.updateSubscription(signal.getPayload());
                     break;
                 case UPDATE_TOPIC:
