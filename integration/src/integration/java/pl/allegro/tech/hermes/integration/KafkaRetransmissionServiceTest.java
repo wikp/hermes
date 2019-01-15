@@ -116,7 +116,7 @@ public class KafkaRetransmissionServiceTest extends IntegrationTest {
                 .build();
 
         currentTime = clock.millis();
-        operations.updateTopic("resetOffsetGroup", "migratedTopicDryRun", patch);
+        operations.updateTopic(topic.getName().getGroupName(), topic.getName().getName(), patch);
         wait.untilTopicIsUpdatedAfter(currentTime, topic, subscription.getName());
 
         sendAvroMessageOnTopic(topic, user.asTestMessage());

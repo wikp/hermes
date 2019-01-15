@@ -210,6 +210,11 @@ public class TopicService {
                 );
             }
             topicRepository.updateTopic(modified);
+            try {
+                Thread.sleep(5000);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
             if (!retrieved.wasMigratedFromJsonType() && modified.wasMigratedFromJsonType()) {
                 topicContentTypeMigrationService.notifySubscriptions(modified, beforeMigrationInstant);
             }
