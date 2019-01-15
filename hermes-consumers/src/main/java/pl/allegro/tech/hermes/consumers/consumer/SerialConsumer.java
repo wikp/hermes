@@ -148,7 +148,7 @@ public class SerialConsumer implements Consumer {
 
     @Override
     public void updateSubscription(Subscription newSubscription) {
-        logger.info("Updating consumer for subscription {}", subscription.getQualifiedName());
+        logger.info("!!B Updating consumer for subscription {} {}", subscription.getQualifiedName(), subscription.getDeliveryType());
         inflightSemaphore.setMaxPermits(calculateInflightSize(newSubscription));
         rateLimiter.updateSubscription(newSubscription);
         sender.updateSubscription(newSubscription);

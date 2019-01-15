@@ -97,6 +97,7 @@ public class SelectiveSupervisorController implements SupervisorController {
     @Override
     public void onSubscriptionChanged(Subscription subscription) {
         if (workTracker.isAssignedTo(subscription.getQualifiedName(), consumerId())) {
+            logger.info("!!B Selective Controler subscription changed: {}", subscription);
             logger.info("Updating subscription {}", subscription.getName());
             supervisor.updateSubscription(subscription);
         }

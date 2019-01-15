@@ -121,7 +121,7 @@ public class ConsumerProcessSupervisor implements Runnable {
     }
 
     private void processSignal(Signal signal) {
-        logger.debug("Processing signal: {}", signal);
+        logger.debug("!!B Consumer Process Supervisor Processing signal: {}", signal);
         metrics.counter("supervisor.signal." + signal.getType().name()).inc();
 
         switch (signal.getType()) {
@@ -148,11 +148,12 @@ public class ConsumerProcessSupervisor implements Runnable {
     private void updateSubscription(Signal signal) {
         if(runningConsumerProcesses.hasProcess(signal.getTarget())) {
             Subscription signalSubscription = signal.getPayload();
+            logger.info("!!B Consumer Process Supervisor update Subscription from signal: {}", signalSubscription);
             if(signalSubscription.getDeliveryType() != runningConsumerProcesses.getProcess(signal.getTarget()).getSubscription().getDeliveryType()) {
-                logger.info("Stopping consumer because of subscription delivery type change: {}", signalSubscription.getName());
+                logger.info("!!B Stopping consumer because of subscription delivery type change: {}", signalSubscription.getName());
                 stop(Signal.of(STOP, signal.getTarget()));
             } else {
-                logger.info("Updating consumer, same subs types:{}", signalSubscription);
+                logger.info("!!B Updating consumer, same subs types:{}", signalSubscription);
                 forRunningConsumerProcess(signal, runningProcess -> runningProcess.getConsumerProcess().accept(signal));
             }
         } else {

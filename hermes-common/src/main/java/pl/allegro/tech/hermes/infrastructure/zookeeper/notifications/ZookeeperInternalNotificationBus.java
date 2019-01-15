@@ -36,6 +36,7 @@ public class ZookeeperInternalNotificationBus implements InternalNotificationsBu
                     callback.onSubscriptionCreated(readSilently(e.getData().getPath(), e.getData().getData(), Subscription.class));
                     break;
                 case CHILD_UPDATED:
+                    logger.info("!!B notification bus sub updated");
                     callback.onSubscriptionChanged(readSilently(e.getData().getPath(), e.getData().getData(), Subscription.class));
                     break;
                 case CHILD_REMOVED:

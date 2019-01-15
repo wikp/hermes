@@ -112,6 +112,7 @@ public class NonblockingConsumersSupervisor implements ConsumersSupervisor {
 
     @Override
     public void updateSubscription(Subscription subscription) {
+        logger.info("!!B Nonblocking Consumers Supervisor Subscription update: {}", subscription);
         backgroundProcess.accept(Signal.of(Signal.SignalType.UPDATE_SUBSCRIPTION, subscription.getQualifiedName(), subscription));
     }
 

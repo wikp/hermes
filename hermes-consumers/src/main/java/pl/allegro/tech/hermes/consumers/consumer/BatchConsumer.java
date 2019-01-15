@@ -147,6 +147,7 @@ public class BatchConsumer implements Consumer {
 
     @Override
     public void updateSubscription(Subscription subscription) {
+        logger.info("!!B Update subscription Batch Consumer: {} {}", subscription.getQualifiedName(), subscription.getDeliveryType());
         this.subscription = subscription;
     }
 

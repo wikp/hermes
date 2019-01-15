@@ -172,24 +172,29 @@ class ConsumerProcessSupervisorTest extends Specification {
         }
     }
 
-    /*def "should stop consumer process when subscription delivery type is changed"() {
+    def "should stop consumer process when subscription delivery type is changed"() {
         given:
+
+
+
         Subscription batchSubscription = subscription(topic1.getQualifiedName(), 'sub1')
-        .withDeliveryType(DeliveryType.BATCH)
+        .withDeliveryType(DeliveryType.SERIAL)
         .build()
         consumer.updateSubscription(batchSubscription)
 
+        runAndWait(supervisor.accept(signals.start))
+
         Subscription serialSubscription = subscription(topic1.getQualifiedName(), 'sub1')
-        .withDeliveryType(DeliveryType.SERIAL)
+        .withDeliveryType(DeliveryType.BATCH)
         .build()
 
         when:
         runAndWait(supervisor.accept(Signal.of(UPDATE_SUBSCRIPTION, batchSubscription.getQualifiedName(), serialSubscription)))
 
         then:
-        supervisor.countRunningProcesses() == 1
+        supervisor.countRunningProcesses() == 0
 
-    }*/
+    }
 
     private static runAndWait(ConsumerProcessSupervisor supervisor) {
         supervisor.run()

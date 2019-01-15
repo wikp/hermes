@@ -94,6 +94,7 @@ public class ConsumerProcess implements Runnable {
     private void processSignals() {
         refreshHealthcheck();
         signals.drain(this::process);
+        logger.info("!!B ConsumerProcess draining signals: {}", signals);
         refreshHealthcheck();
     }
 
@@ -115,7 +116,7 @@ public class ConsumerProcess implements Runnable {
                     retransmit(signal);
                     break;
                 case UPDATE_SUBSCRIPTION:
-                    logger.info("Consumer Process updates subscription:{} {}", signal.getTarget());
+                    logger.info("!!B Consumer Process updates subscription:{}", signal);
                     consumer.updateSubscription(signal.getPayload());
                     break;
                 case UPDATE_TOPIC:
