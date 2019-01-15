@@ -40,7 +40,7 @@ public class KafkaRetransmissionServiceTest extends IntegrationTest {
         remoteService = new RemoteServiceEndpoint(services().serviceMock());
     }
 
-    @Test(enabled = false)
+    @Test
     public void shouldMoveOffsetNearGivenTimestamp() throws InterruptedException {
         // given
         String subscription = "subscription";
@@ -92,7 +92,7 @@ public class KafkaRetransmissionServiceTest extends IntegrationTest {
         remoteService.makeSureNoneReceived();
     }
 
-    @Test(enabled = false)
+    @Test
     public void shouldMoveOffsetInDryRunModeForTopicsMigratedToAvro() throws InterruptedException {
         // given
         Topic topic = operations.buildTopic(randomTopic("resetOffsetGroup", "migratedTopicDryRun").build());
