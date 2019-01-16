@@ -219,22 +219,6 @@ public class TopicService {
                 );
             }
             topicRepository.updateTopic(modified);
-            logger.info("wchodze do petli");
-            try {
-                ConsumerGroupListing name = adminClient.listConsumerGroups().all().get().iterator().next();
-                int size = adminClient.describeConsumerGroups(Arrays.asList(name.groupId())).all().get().get(name.groupId()).members().iterator().next().assignment().topicPartitions().size();
-                while (size < 4) {
-                    logger.info("consumer group state --> {}", size);
-                    Thread.sleep(200);
-                    try {
-                        size = adminClient.describeConsumerGroups(Arrays.asList(name.groupId())).all().get().get(name.groupId()).members().iterator().next().assignment().topicPartitions().size();
-                    } catch (Exception e) {}
-                }
-            } catch (InterruptedException e) {
-                e.printStackTrace();
-            } catch (ExecutionException e) {
-                e.printStackTrace();
-            }
 
             if (!retrieved.wasMigratedFromJsonType() && modified.wasMigratedFromJsonType()) {
                 topicContentTypeMigrationService.notifySubscriptions(modified, beforeMigrationInstant);

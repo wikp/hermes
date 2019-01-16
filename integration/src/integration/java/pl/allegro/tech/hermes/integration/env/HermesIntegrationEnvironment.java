@@ -25,41 +25,25 @@ import java.util.Map;
 @Listeners({RetryListener.class})
 public class HermesIntegrationEnvironment implements EnvironmentAware {
 
-    private static final Map<Class<?>, Starter<?>> STARTERS = new LinkedHashMap<>();
-
-    static {
-        STARTERS.put(ZookeeperStarter.class, new ZookeeperStarter(ZOOKEEPER_PORT, ZOOKEEPER_CONNECT_STRING, CONFIG_FACTORY.getStringProperty(Configs.ZOOKEEPER_ROOT) + "/groups"));
-        STARTERS.put(KafkaStarter.class, new KafkaStarter());
-        STARTERS.put(GraphiteMockStarter.class, new GraphiteMockStarter(GRAPHITE_SERVER_PORT));
-        STARTERS.put(WireMockStarter.class, new WireMockStarter(HTTP_ENDPOINT_PORT));
-        STARTERS.put(GraphiteHttpMockStarter.class, new GraphiteHttpMockStarter());
-        STARTERS.put(OAuthServerMockStarter.class, new OAuthServerMockStarter());
-        STARTERS.put(CustomKafkaStarter.class, new CustomKafkaStarter(SECONDARY_KAFKA_PORT, SECONDARY_ZK_KAFKA_CONNECT));
-        STARTERS.put(JmsStarter.class, new JmsStarter());
-        STARTERS.put(ConfluentSchemaRegistryStarter.class, new ConfluentSchemaRegistryStarter(SCHEMA_REPO_PORT,
-                SECONDARY_ZK_KAFKA_CONNECT));
-        STARTERS.put(ConsumersStarter.class, new ConsumersStarter());
-        STARTERS.put(FrontendStarter.class, new FrontendStarter(FRONTEND_PORT));
-        STARTERS.put(ManagementStarter.class, new ManagementStarter(MANAGEMENT_PORT));
-
-    }
+    protected static final Map<Class<?>, Starter<?>> starters = new LinkedHashMap<>();
 
     private CuratorFramework zookeeper;
 
     @BeforeSuite
     public void prepareEnvironment(ITestContext context) throws Exception {
+        initStarters();
         for (ITestNGMethod method : context.getAllTestMethods()) {
             method.setRetryAnalyzer(new Retry());
         }
 
-        for (Starter<?> starter : STARTERS.values()) {
+        for (Starter<?> starter : starters.values()) {
             starter.start();
         }
 
         this.zookeeper = startZookeeperClient();
         CuratorFramework kafkaZookeeper = startKafkaZookeeperClient();
 
-        SharedServices.initialize(STARTERS, zookeeper, kafkaZookeeper);
+        SharedServices.initialize(starters, zookeeper, kafkaZookeeper);
     }
 
     private CuratorFramework startZookeeperClient() throws InterruptedException {
@@ -83,7 +67,7 @@ public class HermesIntegrationEnvironment implements EnvironmentAware {
 
     @AfterSuite(alwaysRun = true)
     public void cleanEnvironment() throws Exception {
-        ArrayList<Starter<?>> reversedStarters = new ArrayList<>(STARTERS.values());
+        ArrayList<Starter<?>> reversedStarters = new ArrayList<>(starters.values());
         Collections.reverse(reversedStarters);
 
         for (Starter<?> starter : reversedStarters) {
@@ -94,5 +78,21 @@ public class HermesIntegrationEnvironment implements EnvironmentAware {
 
     @Test
     public void shouldTriggerBeforeAndAfterMethods() {
+    }
+
+    protected void initStarters() {
+        starters.put(ZookeeperStarter.class, new ZookeeperStarter(ZOOKEEPER_PORT, ZOOKEEPER_CONNECT_STRING, CONFIG_FACTORY.getStringProperty(Configs.ZOOKEEPER_ROOT) + "/groups"));
+        starters.put(KafkaStarter.class, new KafkaStarter());
+        starters.put(GraphiteMockStarter.class, new GraphiteMockStarter(GRAPHITE_SERVER_PORT));
+        starters.put(WireMockStarter.class, new WireMockStarter(HTTP_ENDPOINT_PORT));
+        starters.put(GraphiteHttpMockStarter.class, new GraphiteHttpMockStarter());
+        starters.put(OAuthServerMockStarter.class, new OAuthServerMockStarter());
+        starters.put(CustomKafkaStarter.class, new CustomKafkaStarter(SECONDARY_KAFKA_PORT, SECONDARY_ZK_KAFKA_CONNECT));
+        starters.put(JmsStarter.class, new JmsStarter());
+        starters.put(ConfluentSchemaRegistryStarter.class, new ConfluentSchemaRegistryStarter(SCHEMA_REPO_PORT,
+                SECONDARY_ZK_KAFKA_CONNECT));
+        starters.put(ConsumersStarter.class, new ConsumersStarter());
+        starters.put(FrontendStarter.class, new FrontendStarter(FRONTEND_PORT));
+        starters.put(ManagementStarter.class, new ManagementStarter(MANAGEMENT_PORT, "integration"));
     }
 }

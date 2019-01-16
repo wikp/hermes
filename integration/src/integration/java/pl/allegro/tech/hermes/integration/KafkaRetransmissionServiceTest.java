@@ -9,6 +9,7 @@ import pl.allegro.tech.hermes.api.PatchData;
 import pl.allegro.tech.hermes.api.Subscription;
 import pl.allegro.tech.hermes.api.Topic;
 import pl.allegro.tech.hermes.common.kafka.offset.PartitionOffset;
+import pl.allegro.tech.hermes.integration.env.ManagementStarter;
 import pl.allegro.tech.hermes.management.infrastructure.kafka.MultiDCOffsetChangeSummary;
 import pl.allegro.tech.hermes.test.helper.avro.AvroUser;
 import pl.allegro.tech.hermes.test.helper.endpoint.RemoteServiceEndpoint;
@@ -35,12 +36,14 @@ public class KafkaRetransmissionServiceTest extends IntegrationTest {
     private final AvroUser user = new AvroUser();
     private Clock clock = Clock.systemDefaultZone();
 
+    private static String RETRANSMISSION_ENV = "retransmission";
+
     @BeforeMethod
     public void initializeAlways() {
         remoteService = new RemoteServiceEndpoint(services().serviceMock());
     }
 
-    @Test(enabled = false)
+    @Test
     public void shouldMoveOffsetNearGivenTimestamp() throws InterruptedException {
         // given
         String subscription = "subscription";
@@ -171,7 +174,12 @@ public class KafkaRetransmissionServiceTest extends IntegrationTest {
             );
             return new PartitionOffsetsPerKafkaTopic(partitionOffsets.get(true), partitionOffsets.get(false));
         }
+    }
 
+    @Override
+    public void initStarters() {
+        super.initStarters();
+        starters.put(ManagementStarter.class, new ManagementStarter(MANAGEMENT_PORT, RETRANSMISSION_ENV));
     }
 }
 
