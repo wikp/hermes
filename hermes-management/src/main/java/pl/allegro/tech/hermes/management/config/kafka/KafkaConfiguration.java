@@ -1,11 +1,14 @@
 package pl.allegro.tech.hermes.management.config.kafka;
 
+import java.util.Properties;
 import kafka.zk.AdminZkClient;
 import kafka.zk.KafkaZkClient;
 import kafka.zookeeper.ZooKeeperClient;
 import org.apache.curator.framework.CuratorFramework;
 import org.apache.curator.framework.CuratorFrameworkFactory;
 import org.apache.curator.retry.RetryNTimes;
+import org.apache.kafka.clients.CommonClientConfigs;
+import org.apache.kafka.clients.admin.AdminClient;
 import org.apache.kafka.common.utils.Time;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
@@ -69,6 +72,13 @@ public class KafkaConfiguration implements MultipleDcKafkaNamesMappersFactory {
 
     private final List<ZooKeeperClient> zkClients = new ArrayList<>();
     private final List<CuratorFramework> curators = new ArrayList<>();
+
+    @Bean
+    AdminClient adminClient() {
+        Properties props = new Properties();
+        props.put(CommonClientConfigs.BOOTSTRAP_SERVERS_CONFIG, "localhost:9093");
+        return AdminClient.create(props);
+    }
 
     @Bean
     MultiDCAwareService multiDCAwareService(KafkaNamesMappers kafkaNamesMappers, SchemaRepository schemaRepository,
