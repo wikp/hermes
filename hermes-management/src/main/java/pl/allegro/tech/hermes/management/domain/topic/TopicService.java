@@ -1,11 +1,6 @@
 package pl.allegro.tech.hermes.management.domain.topic;
 
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
-import java.util.Arrays;
-import java.util.concurrent.ExecutionException;
-import org.apache.kafka.clients.admin.AdminClient;
-import org.apache.kafka.clients.admin.ConsumerGroupListing;
-import org.apache.kafka.common.ConsumerGroupState;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -21,7 +16,6 @@ import pl.allegro.tech.hermes.api.TopicName;
 import pl.allegro.tech.hermes.api.TopicNameWithMetrics;
 import pl.allegro.tech.hermes.api.TopicWithSchema;
 import pl.allegro.tech.hermes.api.helpers.Patch;
-import pl.allegro.tech.hermes.common.kafka.KafkaNamesMapper;
 import pl.allegro.tech.hermes.domain.topic.TopicAlreadyExistsException;
 import pl.allegro.tech.hermes.domain.topic.TopicRepository;
 import pl.allegro.tech.hermes.domain.topic.preview.MessagePreview;
@@ -69,7 +63,6 @@ public class TopicService {
             new ThreadFactoryBuilder()
                     .setNameFormat("scheduled-topic-executor-%d")
                     .build());
-    private final AdminClient adminClient;
 
     @Autowired
     public TopicService(MultiDCAwareService multiDCAwareService,
@@ -82,8 +75,7 @@ public class TopicService {
                         MessagePreviewRepository messagePreviewRepository,
                         Clock clock,
                         Auditor auditor,
-                        TopicOwnerCache topicOwnerCache,
-                        AdminClient adminClient) {
+                        TopicOwnerCache topicOwnerCache) {
         this.multiDCAwareService = multiDCAwareService;
         this.topicRepository = topicRepository;
         this.groupService = groupService;
@@ -96,7 +88,6 @@ public class TopicService {
         this.clock = clock;
         this.auditor = auditor;
         this.topicOwnerCache = topicOwnerCache;
-        this.adminClient = adminClient;
     }
 
     public void createTopicWithSchema(TopicWithSchema topicWithSchema, String createdBy, CreatorRights isAllowedToManage) {
@@ -219,6 +210,9 @@ public class TopicService {
                 );
             }
             topicRepository.updateTopic(modified);
+            while (!topicContentTypeMigrationService.allSubscriptionsHaveConsumersAssigned(modified)) {
+                // wait
+            }
 
             if (!retrieved.wasMigratedFromJsonType() && modified.wasMigratedFromJsonType()) {
                 topicContentTypeMigrationService.notifySubscriptions(modified, beforeMigrationInstant);

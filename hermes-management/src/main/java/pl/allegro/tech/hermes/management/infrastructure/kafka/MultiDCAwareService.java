@@ -6,6 +6,7 @@ import pl.allegro.tech.hermes.api.SubscriptionName;
 import pl.allegro.tech.hermes.api.Topic;
 import pl.allegro.tech.hermes.common.admin.AdminTool;
 import pl.allegro.tech.hermes.common.exception.InternalProcessingException;
+import pl.allegro.tech.hermes.common.kafka.ConsumerGroupId;
 import pl.allegro.tech.hermes.management.domain.topic.BrokerTopicManagement;
 import pl.allegro.tech.hermes.management.domain.topic.TopicContentTypeMigrationService;
 import pl.allegro.tech.hermes.management.domain.topic.UnableToMoveOffsetsException;
@@ -97,5 +98,9 @@ public class MultiDCAwareService {
         } catch (InterruptedException e) {
             throw new InternalProcessingException(e);
         }
+    }
+
+    public ConsumerGroupId getConsumerGroupIdForSubscriptionName(String subName) {
+        return null;
     }
 }

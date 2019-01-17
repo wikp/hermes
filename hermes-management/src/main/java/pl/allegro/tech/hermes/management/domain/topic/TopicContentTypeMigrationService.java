@@ -1,5 +1,9 @@
 package pl.allegro.tech.hermes.management.domain.topic;
 
+import java.util.Arrays;
+import java.util.List;
+import java.util.stream.Collectors;
+import org.apache.kafka.clients.admin.AdminClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -23,14 +27,17 @@ public class TopicContentTypeMigrationService {
     private final SubscriptionRepository subscriptionRepository;
     private final MultiDCAwareService multiDCAwareService;
     private final Clock clock;
+    private final AdminClient adminClient;
 
     @Autowired
     public TopicContentTypeMigrationService(SubscriptionRepository subscriptionRepository,
                                             MultiDCAwareService multiDCAwareService,
-                                            Clock clock) {
+                                            Clock clock,
+                                            AdminClient adminClient) {
         this.subscriptionRepository = subscriptionRepository;
         this.multiDCAwareService = multiDCAwareService;
         this.clock = clock;
+        this.adminClient = adminClient;
     }
 
     public void notifySubscriptions(Topic topic, Instant beforeMigrationInstant) {
@@ -64,4 +71,15 @@ public class TopicContentTypeMigrationService {
         }
     }
 
+    boolean allSubscriptionsHaveConsumersAssigned(Topic modified) {
+        List<String> subscriptionNames = subscriptionRepository.listSubscriptionNames(modified.getName());
+        List<String> consumerGroupNames = subscriptionNames.stream()
+                .map(subName -> multiDCAwareService.getConsumerGroupIdForSubscriptionName(subName).asString())
+                .collect(Collectors.toList());
+
+//        int partitionCount = adminClient.describeTopics(Arrays.asList(modified.getQualifiedName()))
+//        int requiredNumberOfConsumers =  liczba_partycji * subscriptionNames.size();
+        // assignments from adminclient == requiredNumberOfConsumers
+        return true;
+    }
 }

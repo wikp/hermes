@@ -25,6 +25,7 @@ import pl.allegro.tech.hermes.common.kafka.offset.SubscriptionOffsetChangeIndica
 import pl.allegro.tech.hermes.common.message.wrapper.MessageContentWrapper;
 import pl.allegro.tech.hermes.management.config.SubscriptionProperties;
 import pl.allegro.tech.hermes.management.config.TopicProperties;
+import pl.allegro.tech.hermes.management.domain.subscription.SubscriptionService;
 import pl.allegro.tech.hermes.management.domain.topic.BrokerTopicManagement;
 import pl.allegro.tech.hermes.management.infrastructure.kafka.MultiDCAwareService;
 import pl.allegro.tech.hermes.management.infrastructure.kafka.service.BrokersClusterService;
