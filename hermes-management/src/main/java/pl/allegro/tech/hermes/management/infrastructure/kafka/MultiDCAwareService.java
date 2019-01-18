@@ -6,7 +6,6 @@ import pl.allegro.tech.hermes.api.SubscriptionName;
 import pl.allegro.tech.hermes.api.Topic;
 import pl.allegro.tech.hermes.common.admin.AdminTool;
 import pl.allegro.tech.hermes.common.exception.InternalProcessingException;
-import pl.allegro.tech.hermes.common.kafka.ConsumerGroupId;
 import pl.allegro.tech.hermes.management.domain.topic.BrokerTopicManagement;
 import pl.allegro.tech.hermes.management.domain.topic.TopicContentTypeMigrationService;
 import pl.allegro.tech.hermes.management.domain.topic.UnableToMoveOffsetsException;
@@ -43,10 +42,10 @@ public class MultiDCAwareService {
 
     public String readMessageFromPrimary(String clusterName, Topic topic, Integer partition, Long offset) {
         return clusters.stream()
-            .filter(cluster -> clusterName.equals(cluster.getClusterName()))
-            .findFirst()
-            .orElseThrow(() -> new BrokersClusterNotFoundException(clusterName))
-            .readMessageFromPrimary(topic, partition, offset);
+                .filter(cluster -> clusterName.equals(cluster.getClusterName()))
+                .findFirst()
+                .orElseThrow(() -> new BrokersClusterNotFoundException(clusterName))
+                .readMessageFromPrimary(topic, partition, offset);
     }
 
     public MultiDCOffsetChangeSummary moveOffset(Topic topic, String subscriptionName, Long timestamp, boolean dryRun) {
@@ -75,7 +74,7 @@ public class MultiDCAwareService {
     private void waitUntilOffsetsAreMoved(Topic topic, String subscriptionName) {
         Instant abortAttemptsInstant = clock.instant().plus(offsetsMovedTimeout);
 
-        while(!areOffsetsMoved(topic, subscriptionName)) {
+        while (!areOffsetsMoved(topic, subscriptionName)) {
             if (clock.instant().isAfter(abortAttemptsInstant)) {
                 logger.error("Not all offsets related to hermes subscription {}${} were moved.", topic.getQualifiedName(), subscriptionName);
                 throw new UnableToMoveOffsetsException(topic, subscriptionName);
@@ -100,7 +99,8 @@ public class MultiDCAwareService {
         }
     }
 
-    public ConsumerGroupId getConsumerGroupIdForSubscriptionName(String subName) {
-        return null;
+    public boolean allSubscriptionsHaveConsumersAssigned(Topic topic, List<String> subscriptionsNames) {
+        return clusters.stream().allMatch(brokersClusterService ->
+                brokersClusterService.allSubscriptionsHaveConsumersAssigned(topic, subscriptionsNames));
     }
 }

@@ -27,17 +27,14 @@ public class TopicContentTypeMigrationService {
     private final SubscriptionRepository subscriptionRepository;
     private final MultiDCAwareService multiDCAwareService;
     private final Clock clock;
-    private final AdminClient adminClient;
 
     @Autowired
     public TopicContentTypeMigrationService(SubscriptionRepository subscriptionRepository,
                                             MultiDCAwareService multiDCAwareService,
-                                            Clock clock,
-                                            AdminClient adminClient) {
+                                            Clock clock) {
         this.subscriptionRepository = subscriptionRepository;
         this.multiDCAwareService = multiDCAwareService;
         this.clock = clock;
-        this.adminClient = adminClient;
     }
 
     public void notifySubscriptions(Topic topic, Instant beforeMigrationInstant) {
@@ -71,15 +68,18 @@ public class TopicContentTypeMigrationService {
         }
     }
 
-    boolean allSubscriptionsHaveConsumersAssigned(Topic modified) {
-        List<String> subscriptionNames = subscriptionRepository.listSubscriptionNames(modified.getName());
-        List<String> consumerGroupNames = subscriptionNames.stream()
-                .map(subName -> multiDCAwareService.getConsumerGroupIdForSubscriptionName(subName).asString())
-                .collect(Collectors.toList());
+    void waitUntilAllSubscriptionsHasConsumersAssigned(Topic topic, Duration assignmentCompletedTimeout) {
+        Instant abortAttemptsInstant = clock.instant().plus(assignmentCompletedTimeout);
 
-//        int partitionCount = adminClient.describeTopics(Arrays.asList(modified.getQualifiedName()))
-//        int requiredNumberOfConsumers =  liczba_partycji * subscriptionNames.size();
-        // assignments from adminclient == requiredNumberOfConsumers
-        return true;
+        while (!allSubscriptionsHaveConsumersAssigned(topic)) {
+            if (clock.instant().isAfter(abortAttemptsInstant)) {
+                throw new AssignmentsToSubscriptionsNotCompletedException(topic);
+            }
+        }
+    }
+
+    private boolean allSubscriptionsHaveConsumersAssigned(Topic topic) {
+        List<String> subscriptionNames = subscriptionRepository.listSubscriptionNames(topic.getName());
+        return multiDCAwareService.allSubscriptionsHaveConsumersAssigned(topic, subscriptionNames);
     }
 }

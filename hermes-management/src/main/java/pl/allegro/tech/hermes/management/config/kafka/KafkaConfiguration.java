@@ -25,7 +25,6 @@ import pl.allegro.tech.hermes.common.kafka.offset.SubscriptionOffsetChangeIndica
 import pl.allegro.tech.hermes.common.message.wrapper.MessageContentWrapper;
 import pl.allegro.tech.hermes.management.config.SubscriptionProperties;
 import pl.allegro.tech.hermes.management.config.TopicProperties;
-import pl.allegro.tech.hermes.management.domain.subscription.SubscriptionService;
 import pl.allegro.tech.hermes.management.domain.topic.BrokerTopicManagement;
 import pl.allegro.tech.hermes.management.infrastructure.kafka.MultiDCAwareService;
 import pl.allegro.tech.hermes.management.infrastructure.kafka.service.BrokersClusterService;
@@ -75,13 +74,6 @@ public class KafkaConfiguration implements MultipleDcKafkaNamesMappersFactory {
     private final List<CuratorFramework> curators = new ArrayList<>();
 
     @Bean
-    AdminClient adminClient() {
-        Properties props = new Properties();
-        props.put(CommonClientConfigs.BOOTSTRAP_SERVERS_CONFIG, "localhost:9093");
-        return AdminClient.create(props);
-    }
-
-    @Bean
     MultiDCAwareService multiDCAwareService(KafkaNamesMappers kafkaNamesMappers, SchemaRepository schemaRepository,
                                             Clock clock) {
         List<BrokersClusterService> clusters = kafkaClustersProperties.getClusters().stream().map(kafkaProperties -> {
@@ -90,6 +82,7 @@ public class KafkaConfiguration implements MultipleDcKafkaNamesMappersFactory {
             ZooKeeperClient zooKeeperClient = zooKeeperClient(kafkaProperties);
             KafkaZkClient kafkaZkClient = kafkaZkClient(zooKeeperClient);
             AdminZkClient adminZkClient = adminZkClient(kafkaZkClient);
+            AdminClient brokerAdminClient = brokerAdminClient(kafkaProperties.getBootstrapKafkaServer());
 
             BrokerStorage storage = brokersStorage(curatorFramework(kafkaProperties), kafkaZkClient);
 
@@ -106,7 +99,7 @@ public class KafkaConfiguration implements MultipleDcKafkaNamesMappersFactory {
             );
             KafkaSingleMessageReader messageReader = new KafkaSingleMessageReader(kafkaRawMessageReader, schemaRepository, new JsonAvroConverter());
             return new BrokersClusterService(kafkaProperties.getClusterName(), messageReader,
-                    retransmissionService, brokerTopicManagement, kafkaNamesMapper, new OffsetsAvailableChecker(consumerPool, storage));
+                    retransmissionService, brokerTopicManagement, kafkaNamesMapper, new OffsetsAvailableChecker(consumerPool, storage), brokerAdminClient);
         }).collect(toList());
 
         return new MultiDCAwareService(
@@ -177,4 +170,11 @@ public class KafkaConfiguration implements MultipleDcKafkaNamesMappersFactory {
 
         return new KafkaConsumerPool(config, brokerStorage);
     }
+
+    private AdminClient brokerAdminClient(String bootstrapServer) {
+        Properties props = new Properties();
+        props.put(CommonClientConfigs.BOOTSTRAP_SERVERS_CONFIG, bootstrapServer);
+        return AdminClient.create(props);
+    }
+
 }
