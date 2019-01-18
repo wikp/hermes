@@ -2,6 +2,7 @@ package pl.allegro.tech.hermes.management.infrastructure.kafka;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import pl.allegro.tech.hermes.api.Subscription;
 import pl.allegro.tech.hermes.api.SubscriptionName;
 import pl.allegro.tech.hermes.api.Topic;
 import pl.allegro.tech.hermes.common.admin.AdminTool;
@@ -99,8 +100,8 @@ public class MultiDCAwareService {
         }
     }
 
-    public boolean allSubscriptionsHaveConsumersAssigned(Topic topic, List<String> subscriptionsNames) {
+    public boolean allSubscriptionsHaveConsumersAssigned(List<Subscription> subscriptions) {
         return clusters.stream().allMatch(brokersClusterService ->
-                brokersClusterService.allSubscriptionsHaveConsumersAssigned(topic, subscriptionsNames));
+                brokersClusterService.allSubscriptionsHaveConsumersAssigned(subscriptions));
     }
 }

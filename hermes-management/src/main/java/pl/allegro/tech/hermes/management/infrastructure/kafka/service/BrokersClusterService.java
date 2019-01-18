@@ -1,15 +1,9 @@
 package pl.allegro.tech.hermes.management.infrastructure.kafka.service;
 
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.concurrent.ExecutionException;
-import java.util.stream.Collectors;
 import org.apache.kafka.clients.admin.AdminClient;
 import org.apache.kafka.clients.admin.ConsumerGroupDescription;
 import org.apache.kafka.clients.admin.MemberDescription;
-import org.apache.kafka.common.TopicPartition;
-import pl.allegro.tech.hermes.api.SubscriptionName;
+import pl.allegro.tech.hermes.api.Subscription;
 import pl.allegro.tech.hermes.api.Topic;
 import pl.allegro.tech.hermes.common.kafka.KafkaNamesMapper;
 import pl.allegro.tech.hermes.common.kafka.offset.PartitionOffset;
@@ -17,8 +11,12 @@ import pl.allegro.tech.hermes.management.domain.message.RetransmissionService;
 import pl.allegro.tech.hermes.management.domain.topic.BrokerTopicManagement;
 import pl.allegro.tech.hermes.management.domain.topic.SingleMessageReader;
 
+import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
+import java.util.concurrent.ExecutionException;
 import java.util.function.Consumer;
+import java.util.stream.Collectors;
 
 public class BrokersClusterService {
 
@@ -72,12 +70,12 @@ public class BrokersClusterService {
         return retransmissionService.areOffsetsMoved(topic, subscriptionName, clusterName);
     }
 
-    public boolean allSubscriptionsHaveConsumersAssigned(Topic topic, List<String> subscriptionsNames) {
-        return subscriptionsNames.stream().allMatch(name -> subscriptionHasConsumersAlreadyAssigned(topic, name));
+    public boolean allSubscriptionsHaveConsumersAssigned(List<Subscription> subscriptions) {
+        return subscriptions.stream().allMatch(this::subscriptionHasConsumersAlreadyAssigned);
     }
 
-    private boolean subscriptionHasConsumersAlreadyAssigned(Topic topic, String subscriptionName) {
-        String consumerGroupId = kafkaNamesMapper.toConsumerGroupId(new SubscriptionName(subscriptionName, topic.getName())).asString();
+    private boolean subscriptionHasConsumersAlreadyAssigned(Subscription subscription) {
+        String consumerGroupId = kafkaNamesMapper.toConsumerGroupId(subscription.getQualifiedName()).asString();
 
         try {
             return numberOfAssignmentsForConsumerGroup(consumerGroupId) == 4;

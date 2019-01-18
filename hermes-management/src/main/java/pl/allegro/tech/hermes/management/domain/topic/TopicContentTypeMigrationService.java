@@ -8,6 +8,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
+import pl.allegro.tech.hermes.api.Subscription;
 import pl.allegro.tech.hermes.api.Topic;
 import pl.allegro.tech.hermes.domain.subscription.SubscriptionRepository;
 import pl.allegro.tech.hermes.management.infrastructure.kafka.MultiDCAwareService;
@@ -39,8 +40,11 @@ public class TopicContentTypeMigrationService {
 
     public void notifySubscriptions(Topic topic, Instant beforeMigrationInstant) {
         waitUntilOffsetsAvailableOnAllKafkaTopics(topic, CHECK_OFFSETS_AVAILABLE_TIMEOUT);
-        subscriptionRepository.listSubscriptionNames(topic.getName()).forEach(s ->
-                notifySingleSubscription(topic, beforeMigrationInstant, s)
+        subscriptionRepository.listSubscriptions(topic.getName())
+                .stream()
+                .filter(sub -> Subscription.State.SUSPENDED != sub.getState())
+                .map(Subscription::getName)
+                .forEach(sub -> notifySingleSubscription(topic, beforeMigrationInstant, sub)
         );
     }
 
@@ -79,7 +83,10 @@ public class TopicContentTypeMigrationService {
     }
 
     private boolean allSubscriptionsHaveConsumersAssigned(Topic topic) {
-        List<String> subscriptionNames = subscriptionRepository.listSubscriptionNames(topic.getName());
-        return multiDCAwareService.allSubscriptionsHaveConsumersAssigned(topic, subscriptionNames);
+        List<Subscription> notSuspendedSubscriptions = subscriptionRepository.listSubscriptions(topic.getName())
+                .stream()
+                .filter(sub -> Subscription.State.SUSPENDED != sub.getState())
+                .collect(Collectors.toList());
+        return multiDCAwareService.allSubscriptionsHaveConsumersAssigned(notSuspendedSubscriptions);
     }
 }
