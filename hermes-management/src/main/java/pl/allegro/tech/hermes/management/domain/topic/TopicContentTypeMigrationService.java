@@ -87,6 +87,6 @@ public class TopicContentTypeMigrationService {
                 .stream()
                 .filter(sub -> Subscription.State.SUSPENDED != sub.getState())
                 .collect(Collectors.toList());
-        return multiDCAwareService.allSubscriptionsHaveConsumersAssigned(notSuspendedSubscriptions);
+        return multiDCAwareService.allSubscriptionsHaveConsumersAssigned(topic, notSuspendedSubscriptions);
     }
 }

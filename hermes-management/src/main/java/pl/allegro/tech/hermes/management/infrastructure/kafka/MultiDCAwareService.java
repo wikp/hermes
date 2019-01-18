@@ -69,7 +69,7 @@ public class MultiDCAwareService {
     }
 
     public boolean topicExists(Topic topic) {
-        return clusters.stream().map(brokersClusterService -> brokersClusterService.topicExists(topic)).allMatch(Boolean.TRUE::equals);
+        return clusters.stream().allMatch(brokersClusterService -> brokersClusterService.topicExists(topic));
     }
 
     private void waitUntilOffsetsAreMoved(Topic topic, String subscriptionName) {
@@ -88,8 +88,7 @@ public class MultiDCAwareService {
 
     private boolean areOffsetsMoved(Topic topic, String subscriptionName) {
         return clusters.stream()
-                .map(cluster -> cluster.areOffsetsMoved(topic, subscriptionName))
-                .allMatch(Boolean.TRUE::equals);
+                .allMatch(cluster -> cluster.areOffsetsMoved(topic, subscriptionName));
     }
 
     private void sleep(Duration sleepDuration) {
@@ -100,8 +99,8 @@ public class MultiDCAwareService {
         }
     }
 
-    public boolean allSubscriptionsHaveConsumersAssigned(List<Subscription> subscriptions) {
+    public boolean allSubscriptionsHaveConsumersAssigned(Topic topic, List<Subscription> subscriptions) {
         return clusters.stream().allMatch(brokersClusterService ->
-                brokersClusterService.allSubscriptionsHaveConsumersAssigned(subscriptions));
+                brokersClusterService.allSubscriptionsHaveConsumersAssigned(topic, subscriptions));
     }
 }
