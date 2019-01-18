@@ -71,6 +71,7 @@ public class KafkaRetransmissionServiceTest extends IntegrationTest {
 
         Topic topic = operations.buildTopic(randomTopic("resetOffsetGroup", "topic").build());
         operations.createSubscription(topic, subscription, HTTP_ENDPOINT_URL);
+        operations.createSubscription(topic, "subscriptionSuspended", HTTP_ENDPOINT_URL, Subscription.State.SUSPENDED);
 
         sendMessagesOnTopic(topic, 4);
         Thread.sleep(1000); //wait 1s because our date time format has seconds precision
@@ -122,6 +123,8 @@ public class KafkaRetransmissionServiceTest extends IntegrationTest {
         Topic topic = operations.buildTopic(randomTopic("resetOffsetGroup", "migratedTopicDryRun").build());
         long currentTime = clock.millis();
         Subscription subscription = operations.createSubscription(topic, "subscription", HTTP_ENDPOINT_URL);
+        operations.createSubscription(topic, "subscriptionSuspended", HTTP_ENDPOINT_URL, Subscription.State.SUSPENDED);
+
         wait.untilSubscriptionIsActivated(currentTime, topic, subscription.getName());
 
         sendMessagesOnTopic(topic, 1);
