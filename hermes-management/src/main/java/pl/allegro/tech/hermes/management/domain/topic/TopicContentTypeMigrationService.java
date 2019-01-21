@@ -22,8 +22,9 @@ public class TopicContentTypeMigrationService {
 
     private static final Logger logger = LoggerFactory.getLogger(TopicContentTypeMigrationService.class);
 
-    public static final Duration CHECK_OFFSETS_AVAILABLE_TIMEOUT = Duration.ofSeconds(1);
-    public static final Duration INTERVAL_BETWEEN_OFFSETS_AVAILABLE_CHECK_RETRIES = Duration.ofMillis(500);
+    public static final Duration CHECK_OFFSETS_AVAILABLE_TIMEOUT = Duration.ofSeconds(30);
+    public static final Duration INTERVAL_BETWEEN_OFFSETS_AVAILABLE_CHECK = Duration.ofMillis(500);
+    public static final Duration INTERVAL_BETWEEN_ASSIGNMENTS_COMPLETED_CHECK = Duration.ofMillis(500);
 
     private final SubscriptionRepository subscriptionRepository;
     private final MultiDCAwareService multiDCAwareService;
@@ -40,12 +41,24 @@ public class TopicContentTypeMigrationService {
 
     public void notifySubscriptions(Topic topic, Instant beforeMigrationInstant) {
         waitUntilOffsetsAvailableOnAllKafkaTopics(topic, CHECK_OFFSETS_AVAILABLE_TIMEOUT);
+        logger.info("Offsets available on all partitions of topic {}", topic.getQualifiedName());
         subscriptionRepository.listSubscriptions(topic.getName())
                 .stream()
                 .filter(sub -> Subscription.State.SUSPENDED != sub.getState())
                 .map(Subscription::getName)
                 .forEach(sub -> notifySingleSubscription(topic, beforeMigrationInstant, sub)
         );
+    }
+
+    void waitUntilAllSubscriptionsHasConsumersAssigned(Topic topic, Duration assignmentCompletedTimeout) {
+        Instant abortAttemptsInstant = clock.instant().plus(assignmentCompletedTimeout);
+
+        while (!allSubscriptionsHaveConsumersAssigned(topic)) {
+            if (clock.instant().isAfter(abortAttemptsInstant)) {
+                throw new AssignmentsToSubscriptionsNotCompletedException(topic);
+            }
+            sleep(INTERVAL_BETWEEN_ASSIGNMENTS_COMPLETED_CHECK);
+        }
     }
 
     private void notifySingleSubscription(Topic topic, Instant beforeMigrationInstant, String subscriptionName) {
@@ -59,8 +72,8 @@ public class TopicContentTypeMigrationService {
             if (clock.instant().isAfter(abortAttemptsInstant)) {
                 throw new OffsetsNotAvailableException(topic);
             }
-            logger.debug("Not all offsets related to hermes topic {} are available, will retry", topic.getQualifiedName());
-            sleep(INTERVAL_BETWEEN_OFFSETS_AVAILABLE_CHECK_RETRIES);
+            logger.info("Not all offsets related to hermes topic {} are available, will retry", topic.getQualifiedName());
+            sleep(INTERVAL_BETWEEN_OFFSETS_AVAILABLE_CHECK);
         }
     }
 
@@ -69,16 +82,6 @@ public class TopicContentTypeMigrationService {
             Thread.sleep(sleepDuration.toMillis());
         } catch (InterruptedException e) {
             throw new RuntimeException(e);
-        }
-    }
-
-    void waitUntilAllSubscriptionsHasConsumersAssigned(Topic topic, Duration assignmentCompletedTimeout) {
-        Instant abortAttemptsInstant = clock.instant().plus(assignmentCompletedTimeout);
-
-        while (!allSubscriptionsHaveConsumersAssigned(topic)) {
-            if (clock.instant().isAfter(abortAttemptsInstant)) {
-                throw new AssignmentsToSubscriptionsNotCompletedException(topic);
-            }
         }
     }
 

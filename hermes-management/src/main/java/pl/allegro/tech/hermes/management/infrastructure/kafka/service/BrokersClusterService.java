@@ -3,6 +3,8 @@ package pl.allegro.tech.hermes.management.infrastructure.kafka.service;
 import org.apache.kafka.clients.admin.AdminClient;
 import org.apache.kafka.clients.admin.ConsumerGroupDescription;
 import org.apache.kafka.clients.admin.MemberDescription;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import pl.allegro.tech.hermes.api.Subscription;
 import pl.allegro.tech.hermes.api.Topic;
 import pl.allegro.tech.hermes.common.kafka.KafkaNamesMapper;
@@ -18,6 +20,8 @@ import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
 public class BrokersClusterService {
+
+    private static final Logger logger = LoggerFactory.getLogger(BrokersClusterService.class);
 
     private final String clusterName;
     private final SingleMessageReader singleMessageReader;
@@ -70,26 +74,32 @@ public class BrokersClusterService {
     }
 
     public boolean allSubscriptionsHaveConsumersAssigned(Topic topic, List<Subscription> subscriptions) {
-        List<String> consumerGroupsIds = subscriptions.stream()
+        List<String> consumerGroupsForSubscriptions = subscriptions.stream()
                 .map(sub -> kafkaNamesMapper.toConsumerGroupId(sub.getQualifiedName()).asString())
                 .collect(Collectors.toList());
 
         try {
-            int numberOfTopicPartitions = adminClient.describeTopics(getKafkaTopicsNames(topic)).all().get().values().stream().map(v -> v.partitions().size()).reduce(0, Integer::sum) * subscriptions.size();
-            return numberOfAssignmentsForConsumerGroup(consumerGroupsIds) == numberOfTopicPartitions;
+            int requiredTotalNumberOfAssignments = numberOfPartitionsForTopic(topic) * subscriptions.size();
+            return numberOfAssignmentsForConsumersGroups(consumerGroupsForSubscriptions) == requiredTotalNumberOfAssignments;
         } catch (Exception e) {
-            // log exception
+            logger.error("Failed to check assignments for topic " + topic.getQualifiedName() + " subscriptions", e);
             return false;
         }
     }
 
-    private List<String> getKafkaTopicsNames(Topic topic) {
-        return kafkaNamesMapper.toKafkaTopics(topic).stream().map(kafkaTopic -> kafkaTopic.name().asString()).collect(Collectors.toList());
-    }
-
-    private int numberOfAssignmentsForConsumerGroup(List<String> consumerGroupsIds) throws ExecutionException, InterruptedException {
+    private int numberOfAssignmentsForConsumersGroups(List<String> consumerGroupsIds) throws ExecutionException, InterruptedException {
         Collection<ConsumerGroupDescription> consumerGroupsDescriptions = adminClient.describeConsumerGroups(consumerGroupsIds).all().get().values();
         Collection<MemberDescription> memberDescriptions = consumerGroupsDescriptions.stream().flatMap(desc -> desc.members().stream()).collect(Collectors.toList());
         return memberDescriptions.stream().flatMap(memberDescription -> memberDescription.assignment().topicPartitions().stream()).collect(Collectors.toList()).size();
+    }
+
+    private int numberOfPartitionsForTopic(Topic topic) throws ExecutionException, InterruptedException {
+        List<String> kafkaTopicsNames = kafkaNamesMapper.toKafkaTopics(topic).stream()
+                .map(kafkaTopic -> kafkaTopic.name().asString())
+                .collect(Collectors.toList());
+
+        return adminClient.describeTopics(kafkaTopicsNames).all().get().values().stream()
+                .map(v -> v.partitions().size())
+                .reduce(0, Integer::sum);
     }
 }

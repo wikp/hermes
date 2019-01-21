@@ -2,8 +2,6 @@ package pl.allegro.tech.hermes.management.domain.topic;
 
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import java.time.Duration;
-import java.time.temporal.ChronoUnit;
-import java.time.temporal.TemporalUnit;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -215,7 +213,10 @@ public class TopicService {
             topicRepository.updateTopic(modified);
 
             if (!retrieved.wasMigratedFromJsonType() && modified.wasMigratedFromJsonType()) {
-                topicContentTypeMigrationService.waitUntilAllSubscriptionsHasConsumersAssigned(modified, Duration.of(5000, ChronoUnit.SECONDS));
+                logger.info("Waiting until all subscriptions have consumers assigned during topic {} content type migration...", topicName.qualifiedName());
+                topicContentTypeMigrationService.waitUntilAllSubscriptionsHasConsumersAssigned(modified,
+                        Duration.ofSeconds(topicProperties.getCheckTopicSubscriptionsAssignmentCompletedTimeoutSeconds()));
+                logger.info("Notifying subscriptions' consumers about changes in topic {} content type...", topicName.qualifiedName());
                 topicContentTypeMigrationService.notifySubscriptions(modified, beforeMigrationInstant);
             }
             auditor.objectUpdated(modifiedBy, retrieved, modified);

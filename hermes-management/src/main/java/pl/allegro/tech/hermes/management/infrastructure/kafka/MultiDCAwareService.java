@@ -57,6 +57,7 @@ public class MultiDCAwareService {
                 cluster.indicateOffsetChange(topic, subscriptionName, timestamp, dryRun)));
 
         if (!dryRun) {
+            logger.info("Preparing retransmission for subscription {}", topic.getQualifiedName() + "$" + subscriptionName);
             adminTool.retransmit(new SubscriptionName(subscriptionName, topic.getName()));
             clusters.forEach(clusters -> waitUntilOffsetsAreMoved(topic, subscriptionName));
         }
