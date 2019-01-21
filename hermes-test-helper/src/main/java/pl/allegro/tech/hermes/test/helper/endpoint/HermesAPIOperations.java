@@ -84,15 +84,15 @@ public class HermesAPIOperations {
     }
 
     public Subscription createSubscription(Topic topic, String subscriptionName, String endpoint, Subscription.State state) {
-        return createSubscription(topic, subscriptionName, endpoint, ContentType.JSON);
+        return createSubscription(topic, subscriptionName, endpoint, ContentType.JSON, SubscriptionMode.ANYCAST, state);
     }
 
     public Subscription createSubscription(Topic topic, String subscriptionName, String endpoint, ContentType contentType) {
-        return createSubscription(topic, subscriptionName, endpoint, contentType, SubscriptionMode.ANYCAST, Subscription.State.ACTIVE);
+        return createSubscription(topic, subscriptionName, endpoint, contentType, SubscriptionMode.ANYCAST, Subscription.State.PENDING);
     }
 
     public Subscription createBroadcastSubscription(Topic topic, String subscriptionName, String endpoint) {
-        return createSubscription(topic, subscriptionName, endpoint, ContentType.JSON, SubscriptionMode.BROADCAST, Subscription.State.ACTIVE);
+        return createSubscription(topic, subscriptionName, endpoint, ContentType.JSON, SubscriptionMode.BROADCAST, Subscription.State.PENDING);
     }
 
     public Subscription createSubscription(Topic topic,
