@@ -215,7 +215,7 @@ public class TopicService {
             if (!retrieved.wasMigratedFromJsonType() && modified.wasMigratedFromJsonType()) {
                 logger.info("Waiting until all subscriptions have consumers assigned during topic {} content type migration...", topicName.qualifiedName());
                 topicContentTypeMigrationService.waitUntilAllSubscriptionsHasConsumersAssigned(modified,
-                        Duration.ofSeconds(topicProperties.getCheckTopicSubscriptionsAssignmentCompletedTimeoutSeconds()));
+                        Duration.ofSeconds(topicProperties.getSubscriptionsAssignmentsCompletedTimeoutSeconds()));
                 logger.info("Notifying subscriptions' consumers about changes in topic {} content type...", topicName.qualifiedName());
                 topicContentTypeMigrationService.notifySubscriptions(modified, beforeMigrationInstant);
             }

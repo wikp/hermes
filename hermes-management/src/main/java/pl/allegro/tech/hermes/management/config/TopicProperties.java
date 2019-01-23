@@ -19,7 +19,7 @@ public class TopicProperties {
 
     private boolean touchSchedulerEnabled = true;
 
-    private int checkTopicSubscriptionsAssignmentCompletedTimeoutSeconds = 30;
+    private int subscriptionsAssignmentsCompletedTimeoutSeconds = 30;
 
     public int getReplicationFactor() {
         return replicationFactor;
@@ -77,11 +77,11 @@ public class TopicProperties {
         this.touchSchedulerEnabled = touchSchedulerEnabled;
     }
 
-    public int getCheckTopicSubscriptionsAssignmentCompletedTimeoutSeconds() {
-        return checkTopicSubscriptionsAssignmentCompletedTimeoutSeconds;
+    public int getSubscriptionsAssignmentsCompletedTimeoutSeconds() {
+        return subscriptionsAssignmentsCompletedTimeoutSeconds;
     }
 
-    public void setCheckTopicSubscriptionsAssignmentCompletedTimeoutSeconds(int checkTopicSubscriptionsAssignmentCompletedTimeoutSeconds) {
-        this.checkTopicSubscriptionsAssignmentCompletedTimeoutSeconds = checkTopicSubscriptionsAssignmentCompletedTimeoutSeconds;
+    public void setSubscriptionsAssignmentsCompletedTimeoutSeconds(int subscriptionsAssignmentsCompletedTimeoutSeconds) {
+        this.subscriptionsAssignmentsCompletedTimeoutSeconds = subscriptionsAssignmentsCompletedTimeoutSeconds;
     }
 }

@@ -1,9 +1,8 @@
 package pl.allegro.tech.hermes.management.domain.topic;
 
-import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
-import org.apache.kafka.clients.admin.AdminClient;
+import java.util.stream.Stream;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -22,9 +21,9 @@ public class TopicContentTypeMigrationService {
 
     private static final Logger logger = LoggerFactory.getLogger(TopicContentTypeMigrationService.class);
 
-    public static final Duration CHECK_OFFSETS_AVAILABLE_TIMEOUT = Duration.ofSeconds(30);
-    public static final Duration INTERVAL_BETWEEN_OFFSETS_AVAILABLE_CHECK = Duration.ofMillis(500);
-    public static final Duration INTERVAL_BETWEEN_ASSIGNMENTS_COMPLETED_CHECK = Duration.ofMillis(500);
+    private static final Duration CHECK_OFFSETS_AVAILABLE_TIMEOUT = Duration.ofSeconds(30);
+    private static final Duration INTERVAL_BETWEEN_OFFSETS_AVAILABLE_CHECK = Duration.ofMillis(500);
+    private static final Duration INTERVAL_BETWEEN_ASSIGNMENTS_COMPLETED_CHECK = Duration.ofMillis(500);
 
     private final SubscriptionRepository subscriptionRepository;
     private final MultiDCAwareService multiDCAwareService;
@@ -39,15 +38,12 @@ public class TopicContentTypeMigrationService {
         this.clock = clock;
     }
 
-    public void notifySubscriptions(Topic topic, Instant beforeMigrationInstant) {
+    void notifySubscriptions(Topic topic, Instant beforeMigrationInstant) {
         waitUntilOffsetsAvailableOnAllKafkaTopics(topic, CHECK_OFFSETS_AVAILABLE_TIMEOUT);
         logger.info("Offsets available on all partitions of topic {}", topic.getQualifiedName());
-        subscriptionRepository.listSubscriptions(topic.getName())
-                .stream()
-                .filter(sub -> Subscription.State.SUSPENDED != sub.getState())
+        notSuspendedSubscriptionsForTopic(topic)
                 .map(Subscription::getName)
-                .forEach(sub -> notifySingleSubscription(topic, beforeMigrationInstant, sub)
-        );
+                .forEach(sub -> notifySingleSubscription(topic, beforeMigrationInstant, sub));
     }
 
     void waitUntilAllSubscriptionsHasConsumersAssigned(Topic topic, Duration assignmentCompletedTimeout) {
@@ -86,10 +82,14 @@ public class TopicContentTypeMigrationService {
     }
 
     private boolean allSubscriptionsHaveConsumersAssigned(Topic topic) {
-        List<Subscription> notSuspendedSubscriptions = subscriptionRepository.listSubscriptions(topic.getName())
-                .stream()
-                .filter(sub -> Subscription.State.SUSPENDED != sub.getState())
+        List<Subscription> notSuspendedSubscriptions = notSuspendedSubscriptionsForTopic(topic)
                 .collect(Collectors.toList());
         return multiDCAwareService.allSubscriptionsHaveConsumersAssigned(topic, notSuspendedSubscriptions);
+    }
+
+    private Stream<Subscription> notSuspendedSubscriptionsForTopic(Topic topic) {
+        return subscriptionRepository.listSubscriptions(topic.getName())
+                .stream()
+                .filter(sub -> Subscription.State.SUSPENDED != sub.getState());
     }
 }
