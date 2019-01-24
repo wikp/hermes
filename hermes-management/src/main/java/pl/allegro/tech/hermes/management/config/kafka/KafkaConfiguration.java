@@ -171,9 +171,9 @@ public class KafkaConfiguration implements MultipleDcKafkaNamesMappersFactory {
         return new KafkaConsumerPool(config, brokerStorage);
     }
 
-    private AdminClient brokerAdminClient(String bootstrapServer) {
+    private AdminClient brokerAdminClient(String bootstrapServers) {
         Properties props = new Properties();
-        props.put(CommonClientConfigs.BOOTSTRAP_SERVERS_CONFIG, bootstrapServer);
+        props.put(CommonClientConfigs.BOOTSTRAP_SERVERS_CONFIG, bootstrapServers);
         return AdminClient.create(props);
     }
 
