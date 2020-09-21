@@ -5,7 +5,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Multimap;
-import kafka.common.TopicAndPartition;
 import org.junit.After;
 import org.junit.Test;
 import pl.allegro.tech.hermes.common.exception.BrokerInfoNotAvailableException;
@@ -126,7 +125,7 @@ public class ZookeeperBrokerStorageTest extends ZookeeperBaseTest {
     }
 
     private void createLeaderForPartition(TopicAndPartition topicAndPartition, int leaderId) throws Exception {
-        String path = "/brokers/topics/" + topicAndPartition.topic() + "/partitions/" + topicAndPartition.partition() + "/state";
+        String path = "/brokers/topics/" + topicAndPartition.getTopic() + "/partitions/" + topicAndPartition.getPartition() + "/state";
         zookeeperClient.create().creatingParentsIfNeeded().forPath(path);
         zookeeperClient.setData().forPath(path, getSampleLeaderDetails(leaderId).getBytes());
     }

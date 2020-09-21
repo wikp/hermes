@@ -6,10 +6,10 @@ import com.google.common.cache.LoadingCache;
 import com.google.common.cache.RemovalListener;
 import com.google.common.cache.RemovalNotification;
 import com.google.common.util.concurrent.UncheckedExecutionException;
-import kafka.common.TopicAndPartition;
 import org.apache.kafka.clients.consumer.KafkaConsumer;
 import pl.allegro.tech.hermes.common.broker.BrokerDetails;
 import pl.allegro.tech.hermes.common.broker.BrokerStorage;
+import pl.allegro.tech.hermes.common.broker.TopicAndPartition;
 import pl.allegro.tech.hermes.common.exception.BrokerNotFoundForPartitionException;
 
 import java.util.Properties;

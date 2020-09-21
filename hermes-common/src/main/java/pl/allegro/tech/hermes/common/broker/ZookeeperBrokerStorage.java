@@ -5,7 +5,6 @@ import com.google.common.collect.Multimap;
 import com.google.common.collect.Ordering;
 import com.google.common.primitives.Ints;
 import kafka.cluster.Broker;
-import kafka.common.TopicAndPartition;
 import kafka.zk.KafkaZkClient;
 import org.apache.curator.framework.CuratorFramework;
 import org.apache.kafka.common.Node;
@@ -48,10 +47,10 @@ public class ZookeeperBrokerStorage implements BrokerStorage {
     @SuppressWarnings("unchecked")
     public int readLeaderForPartition(TopicAndPartition topicAndPartition) {
         try {
-            TopicPartition topicPartition = new TopicPartition(topicAndPartition.topic(), topicAndPartition.partition());
+            TopicPartition topicPartition = new TopicPartition(topicAndPartition.getTopic(), topicAndPartition.getPartition());
             return (int) kafkaZkClient.getLeaderForPartition(topicPartition).get();
         } catch (Exception exception) {
-            throw new BrokerNotFoundForPartitionException(topicAndPartition.topic(), topicAndPartition.partition(), exception);
+            throw new BrokerNotFoundForPartitionException(topicAndPartition.getTopic(), topicAndPartition.getPartition(), exception);
         }
     }
 
