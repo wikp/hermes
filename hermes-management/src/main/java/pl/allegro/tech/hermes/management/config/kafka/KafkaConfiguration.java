@@ -83,11 +83,11 @@ public class KafkaConfiguration implements MultipleDcKafkaNamesMappersFactory {
 
             AdminClient brokerAdminClient = brokerAdminClient(kafkaProperties);
 
-            BrokerStorage storage = brokersStorage(brokerAdminClient, kafkaProperties);
+            BrokerStorage storage = brokersStorage(brokerAdminClient);
 
             BrokerTopicManagement brokerTopicManagement = new KafkaBrokerTopicManagement(topicProperties, brokerAdminClient, kafkaNamesMapper);
 
-            KafkaConsumerPool consumerPool = kafkaConsumersPool(kafkaProperties, storage);
+            KafkaConsumerPool consumerPool = kafkaConsumersPool(kafkaProperties, storage, kafkaProperties.getBootstrapKafkaServer());
             KafkaRawMessageReader kafkaRawMessageReader =
                     new KafkaRawMessageReader(consumerPool, kafkaProperties.getKafkaConsumer().getPollTimeoutMillis());
 
@@ -148,11 +148,12 @@ public class KafkaConfiguration implements MultipleDcKafkaNamesMappersFactory {
         return createDefaultKafkaNamesMapper(kafkaClustersProperties);
     }
 
-    private BrokerStorage brokersStorage(AdminClient kafkaAdminClient, KafkaProperties kafkaProperties) {
-        return new KafkaBrokerStorage(kafkaAdminClient, kafkaProperties.getSasl().getProtocol());
+    private BrokerStorage brokersStorage(AdminClient kafkaAdminClient) {
+        return new KafkaBrokerStorage(kafkaAdminClient);
     }
 
-    private KafkaConsumerPool kafkaConsumersPool(KafkaProperties kafkaProperties, BrokerStorage brokerStorage) {
+    private KafkaConsumerPool kafkaConsumersPool(KafkaProperties kafkaProperties, BrokerStorage brokerStorage,
+                                                 String configuredBootstrapServers) {
         KafkaConsumerPoolConfig config = new KafkaConsumerPoolConfig(
                 kafkaProperties.getKafkaConsumer().getCacheExpirationSeconds(),
                 kafkaProperties.getKafkaConsumer().getBufferSizeBytes(),
@@ -165,7 +166,7 @@ public class KafkaConfiguration implements MultipleDcKafkaNamesMappersFactory {
                 kafkaProperties.getSasl().getProtocol(),
                 kafkaProperties.getSasl().getJaasConfig());
 
-        return new KafkaConsumerPool(config, brokerStorage);
+        return new KafkaConsumerPool(config, brokerStorage, configuredBootstrapServers);
     }
 
     private AdminClient brokerAdminClient(KafkaProperties kafkaProperties) {

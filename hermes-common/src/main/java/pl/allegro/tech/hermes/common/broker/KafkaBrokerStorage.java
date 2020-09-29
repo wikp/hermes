@@ -21,12 +21,10 @@ import java.util.stream.Collectors;
 public class KafkaBrokerStorage implements BrokerStorage {
 
     private final AdminClient kafkaAdminClient;
-    private final ListenerName brokerListenerName;
 
     @Inject
-    public KafkaBrokerStorage(AdminClient kafkaAdminClient, String brokerListenerName) {
+    public KafkaBrokerStorage(AdminClient kafkaAdminClient) {
         this.kafkaAdminClient = kafkaAdminClient;
-        this.brokerListenerName = ListenerName.normalised(brokerListenerName);
     }
 
     @Override
@@ -37,32 +35,6 @@ public class KafkaBrokerStorage implements BrokerStorage {
                     .get();
         } catch (Exception exception) {
             throw new BrokerNotFoundForPartitionException(topicAndPartition.topic(), topicAndPartition.partition(), exception);
-        }
-    }
-
-//    @Override
-//    public BrokerDetails readBrokerDetails(Integer brokerId) {
-//        try {
-//            Broker broker = kafkaZkClient.getBroker(brokerId).get();
-//            Option<Node> node = broker.getNode(brokerListenerName);
-//            String host = node.get().host();
-//            int port = node.get().port();
-//            return new BrokerDetails(host, port);
-//        } catch (Exception exception) {
-//            throw new BrokerInfoNotAvailableException(brokerId, exception);
-//        }
-//    }
-//TODO kbublik
-    @Override
-    public BrokerDetails readBrokerDetails(Integer brokerId) {
-        try {
-            Optional<Node> node = kafkaAdminClient.describeCluster().nodes()
-                    .thenApply(nodes -> nodes.stream().filter(it -> it.id() == brokerId).findFirst()).get();
-            String host = node.get().host();
-            int port = node.get().port();
-            return new BrokerDetails(host, port);
-        } catch (Exception exception) {
-            throw new BrokerInfoNotAvailableException(brokerId, exception);
         }
     }
 

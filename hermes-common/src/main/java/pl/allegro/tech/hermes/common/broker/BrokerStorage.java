@@ -8,7 +8,5 @@ public interface BrokerStorage {
 
     int readLeaderForPartition(TopicPartition topicAndPartition);
 
-    BrokerDetails readBrokerDetails(Integer leaderId);
-
     List<Integer> readPartitionsIds(String topicName);
 }
