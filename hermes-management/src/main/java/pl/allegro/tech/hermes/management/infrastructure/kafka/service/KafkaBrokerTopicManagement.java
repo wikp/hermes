@@ -6,14 +6,13 @@ import org.apache.kafka.clients.admin.AlterConfigOp;
 import org.apache.kafka.clients.admin.ConfigEntry;
 import org.apache.kafka.clients.admin.NewTopic;
 import org.apache.kafka.common.config.ConfigResource;
-import pl.allegro.tech.hermes.api.ErrorCode;
 import pl.allegro.tech.hermes.api.Topic;
-import pl.allegro.tech.hermes.common.exception.HermesException;
 import pl.allegro.tech.hermes.common.kafka.KafkaNamesMapper;
 import pl.allegro.tech.hermes.common.kafka.KafkaTopic;
 import pl.allegro.tech.hermes.common.kafka.KafkaTopics;
 import pl.allegro.tech.hermes.management.config.TopicProperties;
 import pl.allegro.tech.hermes.management.domain.topic.BrokerTopicManagement;
+import pl.allegro.tech.hermes.management.infrastructure.kafka.BrokersClusterCommunicationException;
 
 import java.util.Collection;
 import java.util.Collections;
@@ -41,7 +40,6 @@ public class KafkaBrokerTopicManagement implements BrokerTopicManagement {
     public void createTopic(Topic topic) {
         Map<String, String> config = createTopicConfig(topic.getRetentionTime().getDuration(), topicProperties);
 
-        //TODO kbublik kafka.admin.RackAwareMode.Enforced$.MODULE$ - no longer passed
         kafkaNamesMapper.toKafkaTopics(topic).forEach(k ->
                 kafkaAdminClient.createTopics(Collections.singletonList(
                         new NewTopic(
@@ -64,7 +62,6 @@ public class KafkaBrokerTopicManagement implements BrokerTopicManagement {
         KafkaTopics kafkaTopics = kafkaNamesMapper.toKafkaTopics(topic);
 
         if (isMigrationToNewKafkaTopic(kafkaTopics)) {
-            //TODO kbublik kafka.admin.RackAwareMode.Enforced$.MODULE$ - no longer used
             kafkaAdminClient.createTopics(Collections.singletonList(
                     new NewTopic(
                             kafkaTopics.getPrimary().name().asString(),
@@ -73,37 +70,36 @@ public class KafkaBrokerTopicManagement implements BrokerTopicManagement {
                     ).configs(config)
             ));
         } else {
-            updateTopicInternal(kafkaTopics.getPrimary(), config);
+            doUpdateTopic(kafkaTopics.getPrimary(), config);
         }
 
         kafkaTopics.getSecondary().ifPresent(secondary ->
-                updateTopicInternal(secondary, config)
+                doUpdateTopic(secondary, config)
         );
     }
 
     @Override
     public boolean topicExists(Topic topic) {
         return kafkaNamesMapper.toKafkaTopics(topic)
-                .allMatch(this::topicExistsInternal);
+                .allMatch(this::doesTopicExist);
     }
 
     private boolean isMigrationToNewKafkaTopic(KafkaTopics kafkaTopics) {
         return kafkaTopics.getSecondary().isPresent() &&
-                !topicExistsInternal(kafkaTopics.getPrimary());
+                !doesTopicExist(kafkaTopics.getPrimary());
     }
 
-    //TODO kbublik use more meaningful exception?
-    private boolean topicExistsInternal(KafkaTopic topic) {
+    private boolean doesTopicExist(KafkaTopic topic) {
         try {
             return kafkaAdminClient.listTopics().names()
                     .thenApply(names -> names.contains(topic.name().asString()))
                     .get();
         } catch (InterruptedException | ExecutionException e) {
-            throw new KafkaCommunicationException(e);
+            throw new BrokersClusterCommunicationException(e);
         }
     }
 
-    private void updateTopicInternal(KafkaTopic topic, Map<String, String> configMap) {
+    private void doUpdateTopic(KafkaTopic topic, Map<String, String> configMap) {
         ConfigResource topicConfigResource = new ConfigResource(
                 ConfigResource.Type.TOPIC,
                 topic.name().asString()
@@ -130,18 +126,4 @@ public class KafkaBrokerTopicManagement implements BrokerTopicManagement {
 
         return props;
     }
-
-    //TODO kbublik Move
-    public static class KafkaCommunicationException extends HermesException {
-
-        public KafkaCommunicationException(Throwable t) {
-            super(t);
-        }
-
-        @Override
-        public ErrorCode getCode() {
-            return ErrorCode.INTERNAL_ERROR;
-        }
-    }
-
 }
