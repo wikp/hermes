@@ -2,7 +2,7 @@ package pl.allegro.tech.hermes.management.infrastructure.kafka.service;
 
 import kafka.log.LogConfig;
 import org.apache.kafka.clients.admin.AdminClient;
-import org.apache.kafka.clients.admin.AlterConfigOp;
+import org.apache.kafka.clients.admin.Config;
 import org.apache.kafka.clients.admin.ConfigEntry;
 import org.apache.kafka.clients.admin.NewTopic;
 import org.apache.kafka.common.config.ConfigResource;
@@ -105,17 +105,14 @@ public class KafkaBrokerTopicManagement implements BrokerTopicManagement {
                 topic.name().asString()
         );
 
-        Collection<AlterConfigOp> configOperations = configMap.entrySet().stream().map(entry ->
-                new AlterConfigOp(
-                        new ConfigEntry(entry.getKey(), entry.getValue()),
-                        AlterConfigOp.OpType.SET
-                )
+        Collection<ConfigEntry> configEntries = configMap.entrySet().stream().map(entry ->
+                new ConfigEntry(entry.getKey(), entry.getValue())
         ).collect(Collectors.toList());
 
-        Map<ConfigResource, Collection<AlterConfigOp>> configUpdates = new HashMap<>();
-        configUpdates.put(topicConfigResource, configOperations);
+        Map<ConfigResource, Config> configUpdates = new HashMap<>();
+        configUpdates.put(topicConfigResource, new Config(configEntries));
 
-        kafkaAdminClient.incrementalAlterConfigs(configUpdates);
+        kafkaAdminClient.alterConfigs(configUpdates);
     }
 
     private Map<String, String> createTopicConfig(int retentionPolicy, TopicProperties topicProperties) {

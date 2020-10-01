@@ -41,7 +41,6 @@ dependencies {
 
     compile(group: 'org.apache.kafka', name: 'kafka_2.11', version: versions.kafka) {
         exclude group: 'net.sf.jopt-simple'
-        exclude group: 'org.apache.zookeeper'
     }
 
     testCompile project(':hermes-test-helper')
