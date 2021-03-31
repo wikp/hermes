@@ -30,7 +30,6 @@ public class HttpMessageBatchSenderFactory implements MessageBatchSenderFactory 
                 configFactory.getIntProperty(Configs.CONSUMER_BATCH_CONNECTION_REQUEST_TIMEOUT),
                 new SimpleEndpointAddressResolver(),
                 resultHandlers,
-                new DefaultBatchHeadersProvider()
-        );
+                new DefaultBatchHeadersProvider());
     }
 }
