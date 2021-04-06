@@ -1,5 +1,6 @@
 package pl.allegro.tech.hermes.consumers.consumer.sender.http;
 
+import pl.allegro.tech.hermes.api.Subscription;
 import pl.allegro.tech.hermes.consumers.consumer.sender.http.headers.HttpHeadersProvider;
 
 import java.util.Collection;
@@ -9,7 +10,7 @@ import static java.util.Collections.emptySet;
 public class EmptyHttpHeadersProvidersFactory implements HttpHeadersProvidersFactory {
 
     @Override
-    public Collection<HttpHeadersProvider> createAll() {
+    public Collection<HttpHeadersProvider> createAllForSubscription(Subscription subscription) {
         return emptySet();
     }
 }

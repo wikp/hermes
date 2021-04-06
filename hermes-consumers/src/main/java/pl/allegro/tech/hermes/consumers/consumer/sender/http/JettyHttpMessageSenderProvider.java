@@ -89,7 +89,7 @@ public class JettyHttpMessageSenderProvider implements ProtocolMessageSenderProv
 
     private HttpHeadersProvider getHttpRequestHeadersProvider(Subscription subscription) {
         AuthHeadersProvider authProvider = getAuthHeadersProvider(subscription);
-        Collection<HttpHeadersProvider> additionalProviders = httpHeadersProviderFactory.createAll();
+        Collection<HttpHeadersProvider> additionalProviders = httpHeadersProviderFactory.createAllForSubscription(subscription);
         Collection<HttpHeadersProvider> providers = ImmutableSet.<HttpHeadersProvider>builder()
                 .addAll(additionalProviders)
                 .add(authProvider)
