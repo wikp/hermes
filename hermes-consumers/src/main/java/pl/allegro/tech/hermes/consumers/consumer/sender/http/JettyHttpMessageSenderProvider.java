@@ -41,7 +41,7 @@ public class JettyHttpMessageSenderProvider implements ProtocolMessageSenderProv
     private final HttpAuthorizationProviderFactory authorizationProviderFactory;
     private final HttpHeadersProvidersFactory httpHeadersProviderFactory;
     private final SendingResultHandlers sendingResultHandlers;
-    private final BroadCastRequestCreatorFactory broadCastRequestCreatorFactory;
+    private final BroadCastRequestsCreatorFactory broadCastRequestsCreatorFactory;
 
     @Inject
     public JettyHttpMessageSenderProvider(
@@ -52,7 +52,7 @@ public class JettyHttpMessageSenderProvider implements ProtocolMessageSenderProv
             HttpAuthorizationProviderFactory authorizationProviderFactory,
             HttpHeadersProvidersFactory httpHeadersProviderFactory,
             SendingResultHandlers sendingResultHandlers,
-            BroadCastRequestCreatorFactory broadCastRequestCreatorFactory) {
+            BroadCastRequestsCreatorFactory broadCastRequestsCreatorFactory) {
         this.httpClient = httpClient;
         this.http2ClientHolder = http2ClientHolder;
         this.endpointAddressResolver = endpointAddressResolver;
@@ -60,7 +60,7 @@ public class JettyHttpMessageSenderProvider implements ProtocolMessageSenderProv
         this.authorizationProviderFactory = authorizationProviderFactory;
         this.httpHeadersProviderFactory = httpHeadersProviderFactory;
         this.sendingResultHandlers = sendingResultHandlers;
-        this.broadCastRequestCreatorFactory = broadCastRequestCreatorFactory;
+        this.broadCastRequestsCreatorFactory = broadCastRequestsCreatorFactory;
     }
 
     @Override
@@ -72,7 +72,7 @@ public class JettyHttpMessageSenderProvider implements ProtocolMessageSenderProv
         HttpRequestFactory requestFactory = httpRequestFactory(subscription);
 
         if (subscription.getMode() == SubscriptionMode.BROADCAST) {
-            BroadCastRequestsCreator requestsProvider = broadCastRequestCreatorFactory.createBroadCastRequestsProvider(requestFactory,resolvableEndpoint,getHttpRequestHeadersProvider(subscription));
+            BroadCastRequestsCreator requestsProvider = broadCastRequestsCreatorFactory.createBroadCastRequestsProvider(requestFactory,resolvableEndpoint,getHttpRequestHeadersProvider(subscription));
             return new JettyBroadCastMessageSender(requestFactory, resolvableEndpoint, getHttpRequestHeadersProvider(subscription), sendingResultHandlers, requestsProvider);
         } else {
             return new JettyMessageSender(requestFactory, resolvableEndpoint, getHttpRequestHeadersProvider(subscription), sendingResultHandlers);

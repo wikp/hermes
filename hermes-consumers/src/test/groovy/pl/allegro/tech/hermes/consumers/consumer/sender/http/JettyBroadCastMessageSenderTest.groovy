@@ -67,7 +67,7 @@ class JettyBroadCastMessageSenderTest extends Specification {
         def address = new ResolvableEndpointAddress(endpoint, new MultiUrlEndpointAddressResolver(),
                 EndpointAddressResolverMetadata.empty());
         def httpRequestFactory = new HttpRequestFactory(client, 1000, 1000, new DefaultHttpMetadataAppender())
-        def broadCastRequestsCreator = new DefaultBroadCastRequestCreatorFactory().createBroadCastRequestsProvider(httpRequestFactory,address,requestHeadersProvider)
+        def broadCastRequestsCreator = new DefaultBroadCastRequestsCreatorFactory().createBroadCastRequestsProvider(httpRequestFactory,address,requestHeadersProvider)
         messageSender = new JettyBroadCastMessageSender(httpRequestFactory, address,
                 requestHeadersProvider, resultHandlersProvider, broadCastRequestsCreator);
     }
@@ -133,8 +133,9 @@ class JettyBroadCastMessageSenderTest extends Specification {
         }
 
         def httpRequestFactory = new HttpRequestFactory(client, 1000, 1000, new DefaultHttpMetadataAppender())
+        def broadCastRequestsCreator = new DefaultBroadCastRequestsCreator(httpRequestFactory,address,requestHeadersProvider)
         messageSender = new JettyBroadCastMessageSender(httpRequestFactory, address,
-                requestHeadersProvider, resultHandlersProvider, broadCastRequestsFactory)
+                requestHeadersProvider, resultHandlersProvider, broadCastRequestsCreator)
 
         when:
         def future = messageSender.send(testMessage())
