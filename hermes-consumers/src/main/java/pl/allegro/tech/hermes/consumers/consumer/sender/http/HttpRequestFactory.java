@@ -11,7 +11,7 @@ import pl.allegro.tech.hermes.consumers.consumer.trace.MetadataAppender;
 import java.net.URI;
 import java.util.concurrent.TimeUnit;
 
-class HttpRequestFactory {
+public class HttpRequestFactory {
 
     private final HttpClient client;
     private final long timeout;
