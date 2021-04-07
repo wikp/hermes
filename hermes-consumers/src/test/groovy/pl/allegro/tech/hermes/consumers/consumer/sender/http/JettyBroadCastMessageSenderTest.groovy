@@ -67,8 +67,9 @@ class JettyBroadCastMessageSenderTest extends Specification {
         def address = new ResolvableEndpointAddress(endpoint, new MultiUrlEndpointAddressResolver(),
                 EndpointAddressResolverMetadata.empty());
         def httpRequestFactory = new HttpRequestFactory(client, 1000, 1000, new DefaultHttpMetadataAppender())
+        def broadCastRequestsCreator = new DefaultBroadCastRequestCreatorFactory().createBroadCastRequestsProvider(httpRequestFactory,address,requestHeadersProvider)
         messageSender = new JettyBroadCastMessageSender(httpRequestFactory, address,
-                requestHeadersProvider, resultHandlersProvider);
+                requestHeadersProvider, resultHandlersProvider, broadCastRequestsCreator);
     }
 
     def "should send message successfully in parallel to all urls"() {
@@ -133,7 +134,7 @@ class JettyBroadCastMessageSenderTest extends Specification {
 
         def httpRequestFactory = new HttpRequestFactory(client, 1000, 1000, new DefaultHttpMetadataAppender())
         messageSender = new JettyBroadCastMessageSender(httpRequestFactory, address,
-                requestHeadersProvider, resultHandlersProvider)
+                requestHeadersProvider, resultHandlersProvider, broadCastRequestsFactory)
 
         when:
         def future = messageSender.send(testMessage())

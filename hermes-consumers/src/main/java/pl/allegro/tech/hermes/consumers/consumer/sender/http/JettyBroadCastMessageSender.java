@@ -7,9 +7,7 @@ import pl.allegro.tech.hermes.consumers.consumer.sender.MessageSender;
 import pl.allegro.tech.hermes.consumers.consumer.sender.MessageSendingResult;
 import pl.allegro.tech.hermes.consumers.consumer.sender.MultiMessageSendingResult;
 import pl.allegro.tech.hermes.consumers.consumer.sender.SingleMessageSendingResult;
-import pl.allegro.tech.hermes.consumers.consumer.sender.http.HttpRequestData.HttpRequestDataBuilder;
 import pl.allegro.tech.hermes.consumers.consumer.sender.http.headers.HttpHeadersProvider;
-import pl.allegro.tech.hermes.consumers.consumer.sender.http.headers.HttpRequestHeaders;
 import pl.allegro.tech.hermes.consumers.consumer.sender.resolver.EndpointAddressResolutionException;
 import pl.allegro.tech.hermes.consumers.consumer.sender.resolver.ResolvableEndpointAddress;
 
@@ -24,15 +22,17 @@ public class JettyBroadCastMessageSender implements MessageSender {
     private final ResolvableEndpointAddress endpoint;
     private final HttpHeadersProvider requestHeadersProvider;
     private final SendingResultHandlers sendingResultHandlers;
+    private final BroadCastRequestsCreator broadCastRequestsCreator;
 
 
     public JettyBroadCastMessageSender(HttpRequestFactory requestFactory,
                                        ResolvableEndpointAddress endpoint,
-                                       HttpHeadersProvider requestHeadersProvider, SendingResultHandlers sendingResultHandlers) {
+                                       HttpHeadersProvider requestHeadersProvider, SendingResultHandlers sendingResultHandlers, BroadCastRequestsCreator broadCastRequestsCreator) {
         this.requestFactory = requestFactory;
         this.endpoint = endpoint;
         this.requestHeadersProvider = requestHeadersProvider;
         this.sendingResultHandlers = sendingResultHandlers;
+        this.broadCastRequestsCreator = broadCastRequestsCreator;
     }
 
     @Override
@@ -54,19 +54,12 @@ public class JettyBroadCastMessageSender implements MessageSender {
     }
 
     private List<CompletableFuture<SingleMessageSendingResult>> collectResults(Message message) throws EndpointAddressResolutionException {
-
-        final HttpRequestData requestData = new HttpRequestDataBuilder()
-                .withRawAddress(endpoint.getRawAddress())
-                .build();
-
-        HttpRequestHeaders headers = requestHeadersProvider.getHeaders(message, requestData);
-
-        return endpoint.resolveAllFor(message).stream()
-                .filter(uri -> message.hasNotBeenSentTo(uri.toString()))
-                .map(uri -> requestFactory.buildRequest(message, uri, headers))
-                .map(this::processResponse)
+        List<Request> requests = broadCastRequestsCreator.createRequests(message);
+        return requests.stream().map(this::processResponse)
                 .collect(Collectors.toList());
     }
+
+
 
     private CompletableFuture<List<SingleMessageSendingResult>> mergeResults(List<CompletableFuture<SingleMessageSendingResult>> results) {
         return CompletableFuture.allOf(results.toArray(new CompletableFuture[results.size()]))
