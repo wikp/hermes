@@ -28,7 +28,7 @@ public class HttpRequestFactory {
         this.metadataAppender = metadataAppender;
     }
 
-    Request buildRequest(Message message, URI uri, HttpRequestHeaders headers) {
+    public Request buildRequest(Message message, URI uri, HttpRequestHeaders headers) {
         return new HttpRequestBuilder(message, uri, headers).build();
     }
 
