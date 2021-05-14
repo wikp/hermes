@@ -72,6 +72,7 @@ allprojects {
             jetty             : '9.4.19.v20190610',
             curator           : '2.12.0',
             dropwizard_metrics: '4.1.0',
+
             micrometer_metrics: '1.2.1',
             wiremock          : '2.19.0',
             fongo             : '1.6.1',
