@@ -1,5 +1,7 @@
 package pl.allegro.tech.hermes.management.api.auth;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import pl.allegro.tech.hermes.api.Group;
@@ -7,6 +9,7 @@ import pl.allegro.tech.hermes.api.Subscription;
 import pl.allegro.tech.hermes.api.Topic;
 import pl.allegro.tech.hermes.domain.topic.TopicRepository;
 import pl.allegro.tech.hermes.management.config.GroupProperties;
+import pl.allegro.tech.hermes.management.infrastructure.metrics.HybridSubscriptionMetricsRepository;
 
 import javax.ws.rs.container.ContainerRequestContext;
 
@@ -15,6 +18,8 @@ import javax.ws.rs.container.ContainerRequestContext;
  */
 @Component
 public class ManagementRights {
+
+    private static final Logger logger = LoggerFactory.getLogger(ManagementRights.class);
 
     private final TopicRepository topicRepository;
     private final GroupProperties groupProperties;
@@ -36,7 +41,9 @@ public class ManagementRights {
     }
 
     public boolean isUserAllowedToCreateGroup(ContainerRequestContext requestContext) {
-        return isAdmin(requestContext) || groupProperties.isNonAdminCreationEnabled();
+        final boolean nonAdminCreationEnabled = groupProperties.isNonAdminCreationEnabled();
+        logger.info("Non admin creation enabled is [{}]", nonAdminCreationEnabled);
+        return isAdmin(requestContext) || nonAdminCreationEnabled;
     }
 
     private boolean isUserAllowedToManageGroup(ContainerRequestContext requestContext) {
